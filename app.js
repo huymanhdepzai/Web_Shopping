@@ -12,6 +12,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'ShopWeb', 'index.html'));
 });
 
+app.use(express.json());
 app.use('/search', searchRoute);
 
 app.listen(PORT, () => {
