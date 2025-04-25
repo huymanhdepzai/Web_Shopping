@@ -1,10 +1,17 @@
 const express = require("express");
+const session = require("express-session");
 const path = require("path");
 const searchRoute = require("./routes/search");
-const cartRoute = require("./routes/search");
+const cartRoute = require("./routes/cart");
 const app = express();
 
 const PORT = 3000;
+
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: true,
+}));
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "ShopWeb")));

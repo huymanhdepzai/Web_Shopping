@@ -1,7 +1,12 @@
-const session = require("express-session");
 const express = require("express");
-const { Router } = require("express");
 const router = express.Router();
+
+const products = [
+  { id: 1, name: 'Giày Adidas Alpha', price: 1200, category: 'giay' },
+  { id: 2, name: 'Giày Nike Air Max', price: 1500, category: 'giay' },
+  { id: 3, name: 'Áo Hoodie Local Brand', price: 500, category: 'ao' },
+  { id: 4, name: 'Quần Jogger nam', price: 700, category: 'quan' }
+];
 
 router.use((req, res, next) => {
   if (!req.session.cart) {
@@ -12,30 +17,31 @@ router.use((req, res, next) => {
 
 router.post("/add", (req, res) => {
   try {
-    const productId = parseInt(req.body.productId);
-    const quantity = parseInt(req.body.quantity);
+    
+    const productId = req.body.productId ? parseInt(req.body.productId) : NaN;
+    const quantity = req.body.quantity ? parseInt(req.body.quantity) : NaN;
 
     if (isNaN(productId) || isNaN(quantity)) {
       return res
         .status(400)
-        .json({ success: false, message: "Invalid product ID or quantity" });
+        .json({ success: false, message: "Sản phẩm hoặc số lượng không phù hợp" });
     }
     const product = products.find((p) => p.id === productId);
     if (!product) {
       return res
         .status(404)
-        .json({ success: false, message: "Product not found" });
+        .json({ success: false, message: "Không tìm thấy sản phẩm" });
     }
 
     if (quantity <= 0) {
       return res
         .status(400)
-        .json({ success: false, message: "Quantity must be greater than 0" });
+        .json({ success: false, message: "Số lượng cần lớn hơn 0" });
     }
     const cartItem = {
       product: product,
       quantity: quantity,
-      total: product * quantity,
+      total: product.price * quantity,
     };
     const existingItem = req.session.cart.find((item) => item.id === productId);
     if (existingItem) {
@@ -44,7 +50,7 @@ router.post("/add", (req, res) => {
     } else {
       req.session.cart.push(cartItem);
     }
-    res.json({ success: true, message: "Items is added to cart" });
+    res.json({ success: true, message: "Đã thêm vào giỏ hàng" });
   } catch (err) {
     console.error("Lỗi thêm vào giỏ hàng: ", err);
     res.status(500).json({ success: false, message: "Lỗi máy chủ" });
@@ -61,5 +67,6 @@ router.get("/data", (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi máy chủ" });
   }
 });
+
 
 module.exports = router;
