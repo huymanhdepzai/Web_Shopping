@@ -1,30 +1,18 @@
 const express = require("express");
 const router = express.Router();
 
-const products = [
-  { id: 1, name: 'Giày Adidas Alpha', price: 1200, category: 'giay' },
-  { id: 2, name: 'Giày Nike Air Max', price: 1500, category: 'giay' },
-  { id: 3, name: 'Áo Hoodie Local Brand', price: 500, category: 'ao' },
-  { id: 4, name: 'Quần Jogger nam', price: 700, category: 'quan' }
-];
-
-router.use((req, res, next) => {
-  if (!req.session.cart) {
-    req.session.cart = [];
-  }
-  next();
-});
-
 router.post("/add", (req, res) => {
   try {
-    
     const productId = req.body.productId ? parseInt(req.body.productId) : NaN;
     const quantity = req.body.quantity ? parseInt(req.body.quantity) : NaN;
 
     if (isNaN(productId) || isNaN(quantity)) {
       return res
         .status(400)
-        .json({ success: false, message: "Sản phẩm hoặc số lượng không phù hợp" });
+        .json({
+          success: false,
+          message: "Sản phẩm hoặc số lượng không phù hợp",
+        });
     }
     const product = products.find((p) => p.id === productId);
     if (!product) {
@@ -56,17 +44,5 @@ router.post("/add", (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi máy chủ" });
   }
 });
-
-router.get("/data", (req, res) => {
-  try {
-    const cart = [] || req.session.cart;
-    const totalAmount = cart.reduce((sum, item) => sum + item.total, 0, 0);
-    res.json({ cart, totalAmount });
-  } catch (err) {
-    console.error("Lỗi truy cập vào giỏ hàng");
-    res.status(500).json({ success: false, message: "Lỗi máy chủ" });
-  }
-});
-
 
 module.exports = router;
