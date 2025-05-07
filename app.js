@@ -7,7 +7,7 @@ const router = require("./routes/index");
 
 mongoose
   .connect(
-    "mongodb+srv://manhlczzz:Spectre2004@ecommerce.1d8gvs2.mongodb.net/?retryWrites=true&w=majority&appName=Ecommerce",
+    ,
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
