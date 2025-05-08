@@ -1,33 +1,36 @@
-const express = require("express");
-const router = express.Router();
+const Product = require("../models/Product");
 
-router.get("/", (req, res) => {
+module.exports = async (req, res) => {
   try {
-    const { q, category, minPrice, maxPrice } = req.query;
-    let filtered = products;
+    const { q, category, minPrice, maxPrice, page = 1, limit = 10 } = req.query;
+
+    const filter = {};
 
     if (q) {
-      filtered = filtered.filter((p) =>
-        p.name.toLowerCase().includes(q.toLowerCase()),
-      );
+      filter.name = { $regex: q, $options: 'i' };
     }
-    if (category) {
-      filtered = filtered.filter((p) => p.category === category);
+
+    if (category) filter.category = category;
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
-    if (minPrice) {
-      filtered = filtered.filter((p) => p.price >= Number(minPrice));
-    }
-    if (maxPrice) {
-      filtered = filtered.filter((p) => p.price <= Number(maxPrice));
-    }
+
+    const products = await Product.find(filter)
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const total = await Product.countDocuments(filter);
 
     res.json({
-      total: filtered.length,
-      products: filtered,
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      products
     });
   } catch (err) {
-    res.status(500).json({ message: "Search failed", error: err.message });
+    console.error("Lỗi khi tìm kiếm:", err);
+    res.status(500).json({ message: "Tìm kiếm thất bại", error: err.message });
   }
-});
-
-module.exports = router;
+};

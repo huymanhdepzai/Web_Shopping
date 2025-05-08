@@ -21,6 +21,9 @@
   },
   "homepage": "https://github.com/p3dm/Web_Shopping#readme",
   "dependencies": {
+    "@ltv/env": "^4.0.0",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
     "mongoose": "^8.14.1"
