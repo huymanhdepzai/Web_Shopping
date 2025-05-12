@@ -8,7 +8,7 @@ module.exports = (req, res) => {
         });
       }
   
-      res.clearCookie("connect.sid"); // xóa session cookie
+      res.clearCookie("connect.sid");
       res.json({
         success: true,
         message: "Đăng xuất thành công"

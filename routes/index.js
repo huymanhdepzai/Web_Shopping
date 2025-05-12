@@ -18,8 +18,9 @@ const logoutRoute = require("../controller/user/logout");
 router.get("/search", searchRoute);
 
 //cart
-router.get("/cart", addToCartRoute);
 router.get("/cart/data", dataInCartRoute);
 router.post("/cart/add", addToCartRoute);
 router.delete("/cart/delete", deleteItemInCartRoute);
 
+
+module.exports = router;
