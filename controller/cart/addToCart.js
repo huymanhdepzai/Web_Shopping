@@ -13,25 +13,19 @@ module.exports = async (req, res) => {
       return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm" });
     }
 
-
-
-    const productData = product.toObject(); 
-    const price = parseFloat(productData.price); 
-
     if (!req.session.cart) req.session.cart = [];
 
-    const existingItem = req.session.cart.find(item => item.product._id.equals(productData._id));
+    const existingItem = req.session.cart.find(item => item.product._id.equals(product._id));
     if (existingItem) {
-      existingItem.quantity += parseInt(quantity); 
-      existingItem.total = existingItem.quantity * price;
+      existingItem.quantity += quantity;
+      existingItem.total = existingItem.quantity * product.price;
     } else {
       req.session.cart.push({
-        product: productData,
-        quantity: parseInt(quantity),
-        total: parseInt(quantity) * price
+        product,
+        quantity,
+        total: quantity * product.price
       });
     }
-
 
     res.json({ success: true, message: "Đã thêm vào giỏ hàng", cart: req.session.cart });
   } catch (err) {
