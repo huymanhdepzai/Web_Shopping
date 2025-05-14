@@ -9,6 +9,7 @@ const authToken = require("../middleware/authToken");
 const loginRoute = require("../controller/user/login");
 const registerRoute = require("../controller/user/register");
 const logoutRoute = require("../controller/user/logout");
+const addProductRoute = require("../controller/product/addProduct");
 
 //login
 // router.post("/login", loginRoute);
@@ -19,8 +20,10 @@ router.get("/search", searchRoute);
 
 //cart
 router.get("/cart/data", dataInCartRoute);
-router.post("/cart/add", addToCartRoute);
+router.post("/cart/addToCart", addToCartRoute);
 router.delete("/cart/delete", deleteItemInCartRoute);
 
+//product
+router.post("/product/addProduct", addProductRoute);
 
 module.exports = router;
