@@ -1,17 +1,21 @@
-// const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-// const productSchema = new mongoose.Schema({
-//   name: String,
-//   description: String,
-//   price: Number,
-//   category: String,
-//   brand: String,
-//   stock: Number,
-//   rating: Number,
-//   createdAt: { type: Date, default: Date.now }
-// });
+const productSchema = new mongoose.Schema(
+  {
+    productName: String,
+    description: String,
+    price: Number,
+    price: Number,
+    category: String,
+    brandName: String,
+    productImage: [],
+    createdAt: Date,
+    updatedAt: Date,
+  },
+  {
+    timestamps: true,
+  },
+);
+productSchema.index({ name: "text", description: "text" });
 
-// module.exports = mongoose.model('Product', productSchema);
-
-
-
+module.exports = mongoose.model("Product", productSchema);
