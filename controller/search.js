@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
     const filter = {};
 
     if (q) {
-      filter.name = { $regex: q, $options: 'i' };
+      filter.productName = { $regex: q, $options: 'i' };
     }
 
     if (category) filter.category = category;
