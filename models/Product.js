@@ -4,11 +4,10 @@ const productSchema = new mongoose.Schema(
   {
     productName: String,
     description: String,
-    price: Number,
-    price: Number,
+    price: String,
     category: String,
     brandName: String,
-    productImage: [],
+    img: [],
     createdAt: Date,
     updatedAt: Date,
   },

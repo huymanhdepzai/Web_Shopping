@@ -16,8 +16,8 @@ module.exports = async (req, res) => {
         throw new Error ("Thiếu tên tài khoản")
     }
 
-
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSaltSync(10);
+    const hashedPassword = await bcrypt.hashSync(password, salt);
 
     const newUser = new User({
       username,
