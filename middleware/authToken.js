@@ -1,15 +1,45 @@
-function authToken(req, res, next) {
-    if (!req.session || !req.session.userId) {
+const jwt = require('jsonwebtoken');
+
+async function authToken(req, res, next) {
+  try {
+    // Get token from header
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) {
       return res.status(401).json({
-        message: "Bạn chưa đăng nhập",
+        message: "Không tìm thấy token xác thực",
         success: false,
         error: true
       });
     }
 
-    req.userId = req.session.userId;
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Add user info to request
+    req.user = {
+      userId: decoded.userId,
+      username: decoded.username,
+      isAdmin: decoded.isAdmin
+    };
+
     next();
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        message: "Token đã hết hạn",
+        success: false,
+        error: true
+      });
+    }
+    
+    return res.status(401).json({
+      message: "Token không hợp lệ",
+      success: false,
+      error: true
+    });
   }
-  
-  module.exports = authToken;
+}
+
+module.exports = authToken;
   
