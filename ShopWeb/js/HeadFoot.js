@@ -74,7 +74,7 @@ function renderSearchResults(products) {
     item.className = "product-item";
     item.innerHTML = `
       <div class = product-name>
-        <strong>${product.name}</strong>
+        <strong>${product.productName}</strong>
       </div>
       `;
     const tooltip = item.querySelector(".tooltip");
@@ -85,15 +85,15 @@ function renderSearchResults(products) {
       tooltip.classList.add("hidden");
     });
     item.addEventListener("click", () => {
-      document.getElementById("search-box").value = product.name;
+      document.getElementById("search-box").value = product.productName;
       container.style.display = "none";
     });
 
     container.appendChild(item);
   });
 
-  container.style.display = "block";
-}
+  container.style.display = "block";  
+} 
 
 function addHeader() {
   document.write(`
@@ -117,7 +117,7 @@ function addHeader() {
               <div id="search-results" class=""></div>
             </form>
             <div class="tags">
-              <strong>Từ khóa: </strong>
+              <strong>Từ khóa: Iphone </strong>
             </div>
           </div>
 

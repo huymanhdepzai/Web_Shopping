@@ -11,6 +11,8 @@ const loginRoute = require("../controller/user/login");
 const registerRoute = require("../controller/user/signup");
 const logoutRoute = require("../controller/user/logout");
 const addProductRoute = require("../controller/product/addProduct");
+const getProductsRoute = require('../controller/product/getProduct');
+const getProductDetailsRoute = require('../controller/product/getProductDetails');
 
 //login
 router.post("/login", loginRoute);
@@ -27,5 +29,7 @@ router.delete("/cart/delete", authToken, deleteItemInCartRoute);
 
 //product
 router.post("/product/addProduct", addProductRoute);
+router.get("/product/getProduct", getProductsRoute);
+router.get('/product/details/:productId', getProductDetailsRoute);
 
 module.exports = router;

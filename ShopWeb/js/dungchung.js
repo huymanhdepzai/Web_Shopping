@@ -820,3 +820,57 @@ function getThongTinSanPhamFrom_TheGioiDiDong() {
 //     $(target).fadeIn(600);
 
 // });
+
+// dungchung.js
+async function loadProducts() {
+  try {
+    const response = await fetch('http://localhost:3000/api/product/getProduct');
+    const result = await response.json();
+
+    if (!result.success) {
+      console.error(result.message || 'Lỗi khi lấy sản phẩm');
+      return;
+    }
+
+    const products = result.allProducts;
+    const container = document.getElementById('products-list');
+    if (!container) {
+      console.error('Không tìm thấy phần tử #products-list');
+      return;
+    }
+
+    container.innerHTML = ''; // Xóa nội dung cũ
+
+    if (products.length === 0) {
+      container.innerHTML = '<p>Không có sản phẩm nào.</p>';
+      return;
+    }
+
+    products.forEach(product => {
+      const imgSrc = product.img && product.img.length > 0 ? product.img[0] : 'img/default-product.png';
+      // Hiển thị mô tả ngắn (ví dụ dòng đầu tiên trong mảng description nếu có)
+      const shortDesc = (product.description && product.description.length > 0) ? product.description[0] : '';
+
+      const productHTML = `
+        <div class="product-item" style="width: 200px; margin: 10px; border: 1px solid #ddd; padding: 10px;">
+          <div class="product-img" style="text-align: center;">
+            <img src="${imgSrc}" alt="${product.productName}" style="max-width: 100%; height: auto;" />
+          </div>
+          <h3>${product.productName}</h3>
+          <p><strong>Hãng:</strong> ${product.brandName}</p>
+          <p><strong>Giá:</strong> ${product.salePrice} VND</p>
+          <p><strong>Danh mục:</strong> ${product.category}</p>
+          <p><strong>Mô tả:</strong> ${shortDesc}</p>
+          <p><strong>Còn hàng:</strong> ${product.stock > 0 ? 'Có' : 'Hết hàng'}</p>
+          <p><strong>Trạng thái:</strong> ${product.isActive ? 'Hoạt động' : 'Không hoạt động'}</p>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', productHTML);
+    });
+  } catch (error) {
+    console.error('Lỗi khi tải sản phẩm:', error);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadProducts);
