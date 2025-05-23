@@ -5,15 +5,32 @@ const app = express();
 const router = require("./routes/index");
 const connectDB = require("./config/db");
 const cors = require("cors");
+const { default: mongoose } = require("mongoose");
+const MongoStore = require("connect-mongo");
 require("dotenv").config()
 
 const PORT = 3000 || process.env.PORT;
 
+// Configure CORS middleware
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true
+}));
+
 app.use(
   session({
-    secret: "your-secret-key",
+    secret: "your-secret-key", 
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 24
+    },
+    store: MongoStore.create({
+      mongoUrl: process.env.DATABASE_URL,
+      mongooseConnection: mongoose.connection,
+      ttl: 14 * 24 * 60 * 60
+    })
   })
 );
 
@@ -33,4 +50,3 @@ connectDB().then(() => {
     console.log("Connected to MongoDB")
   });
 }).catch((err) => console.error(err));
-
