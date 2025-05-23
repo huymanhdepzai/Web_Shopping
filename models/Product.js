@@ -13,13 +13,32 @@ const productSchema = new mongoose.Schema(
       trim: true
     },
     description: {
-      type: String,
-      required: [true, 'Mô tả sản phẩm là bắt buộc']
+      general: {
+        type: String,
+        required: true
+      },
+      specifications: {
+        screen: String,
+        operatingSystem: String,
+        rearCamera: String,
+        frontCamera: String,
+        cpu: String,
+        ram: String,
+        storage: String,
+        externalStorage: String,
+        battery: String,
+      },
+      features: [String],
+      warranty: String
     },
     price: {
       type: Number,
       required: [true, 'Giá sản phẩm là bắt buộc'],
       min: [0, 'Giá sản phẩm không được âm']
+    },
+    salePrice:{
+      type: String,
+      required:[true, 'Giá sản phẩm là bắt buộc'],
     },
     category: {
       type: String,

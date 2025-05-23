@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 
 async function authToken(req, res, next) {
   try {
-    // Get token from header
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
@@ -12,11 +11,8 @@ async function authToken(req, res, next) {
         error: true
       });
     }
-
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Add user info to request
     req.user = {
       userId: decoded.userId,
       username: decoded.username,
