@@ -35,8 +35,12 @@ app.use(
 );
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "ShopWeb")));
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(__dirname));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/img', express.static(path.join(__dirname, 'img')));
+app.use('/data', express.static(path.join(__dirname, 'data')));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "ShopWeb", "index.html"));
