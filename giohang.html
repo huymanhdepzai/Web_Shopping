@@ -2,50 +2,329 @@
 <html lang="vi">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta http-equiv="X-UA-Compatible" content="ie=edge" />
 	<link rel="shortcut icon" href="img/favicon.ico" />
 
 	<title>Thế giới điện thoại</title>
 
 	<!-- Load font awesome icons -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-	 crossorigin="anonymous">
+	<link
+		rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+		crossorigin="anonymous"
+	/>
 
 	<!-- our files -->
 	<!-- css -->
-	<link rel="stylesheet" href="css/style.css">
-	<link rel="stylesheet" href="css/topnav.css">
-	<link rel="stylesheet" href="css/header.css">
-	<link rel="stylesheet" href="css/taikhoan.css">
-	<link rel="stylesheet" href="css/gioHang.css">
-	<link rel="stylesheet" href="css/footer.css">
+	<link rel="stylesheet" href="css/style.css" />
+	<link rel="stylesheet" href="css/topnav.css" />
+	<link rel="stylesheet" href="css/header.css" />
+	<link rel="stylesheet" href="css/taikhoan.css" />
+	<link rel="stylesheet" href="css/gioHang.css" />
+	<link rel="stylesheet" href="css/footer.css" />
 	<!-- js -->
 	<script src="data/products.js"></script>
 	<script src="js/classes.js"></script>
 	<script src="js/dungchung.js"></script>
 	<script src="js/giohang.js"></script>
-
 </head>
 
 <body>
-	<script> addTopNav(); </script>
+	<script>addTopNav();</script>
 
 	<section style="min-height: 85vh">
-		<script> addHeader(); </script>
+		<script>addHeader();</script>
 
-		<table class="listSanPham" > </table>
-		
-	</section> <!-- End Section -->
+		<table class="listSanPham"></table>
+	</section>
+	<!-- End Section -->
 
-	<script>
-		addContainTaiKhoan();
-	</script>
+	<script>addContainTaiKhoan();</script>
 
 	<div class="footer"><script>addFooter();</script></div>
 
 	<i class="fa fa-arrow-up" id="goto-top-page" onclick="gotoTop()"></i>
+
+	<!-- Popup chọn hình thức nhận hàng / giao hàng -->
+	<div
+		id="paymentModal"
+		style="
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 9999;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			padding: 20px;
+			box-sizing: border-box;
+		"
+	>
+		<div
+			style="
+				background: #fff;
+				padding: 25px 30px;
+				border-radius: 10px;
+				width: 360px;
+				max-width: 100%;
+				box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+				position: relative;
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			"
+		>
+			<button
+				onclick="closePaymentModal()"
+				aria-label="Đóng popup"
+				style="
+					position: absolute;
+					top: 12px;
+					right: 12px;
+					font-weight: bold;
+					background: none;
+					border: none;
+					font-size: 22px;
+					cursor: pointer;
+					color: #888;
+					transition: color 0.3s ease;
+				"
+				onmouseover="this.style.color='#444'"
+				onmouseout="this.style.color='#888'"
+			>
+				×
+			</button>
+
+			<h3
+				style="
+					margin-top: 0;
+					margin-bottom: 20px;
+					font-weight: 600;
+					font-size: 1.3rem;
+					color: #222;
+					text-align: center;
+				"
+			>
+				Chọn hình thức nhận hàng
+			</h3>
+
+			<div
+				style="
+					display: flex;
+					justify-content: center;
+					gap: 20px;
+					margin-bottom: 15px;
+				"
+			>
+				<button
+					onclick="selectPickup()"
+					style="
+						flex: 1;
+						padding: 12px 0;
+						border-radius: 6px;
+						border: 2px solid #17c671;
+						background: #17c671;
+						color: #fff;
+						font-weight: 600;
+						cursor: pointer;
+						transition: background-color 0.3s ease, color 0.3s ease;
+					"
+					onmouseover="this.style.background='#13a65a'; this.style.borderColor='#13a65a';"
+					onmouseout="this.style.background='#17c671'; this.style.borderColor='#17c671';"
+				>
+					Nhận tại cửa hàng
+				</button>
+
+				<button
+					onclick="showDeliveryForm()"
+					style="
+						flex: 1;
+						padding: 12px 0;
+						border-radius: 6px;
+						border: 2px solid #007bff;
+						background: #fff;
+						color: #007bff;
+						font-weight: 600;
+						cursor: pointer;
+						transition: background-color 0.3s ease, color 0.3s ease;
+					"
+					onmouseover="this.style.background='#007bff'; this.style.color='#fff';"
+					onmouseout="this.style.background='#fff'; this.style.color='#007bff';"
+				>
+					Giao hàng tận nơi
+				</button>
+			</div>
+
+			<div id="deliveryForm" style="display: none; margin-top: 20px;">
+				<label
+					for="deliveryAddress"
+					style="font-weight: 600; color: #333;"
+					>Địa chỉ giao hàng:</label
+				><br />
+				<textarea
+					id="deliveryAddress"
+					rows="4"
+					style="
+						width: 100%;
+						padding: 10px;
+						border: 1px solid #ccc;
+						border-radius: 6px;
+						resize: vertical;
+						font-size: 0.9rem;
+						margin-top: 6px;
+						box-sizing: border-box;
+					"
+					placeholder="Nhập địa chỉ nhận hàng"
+				></textarea>
+				<div
+					style="
+						margin-top: 15px;
+						display: flex;
+						justify-content: flex-end;
+						gap: 10px;
+					"
+				>
+					<button
+						onclick="submitDelivery()"
+						style="
+							padding: 10px 18px;
+							background: #007bff;
+							color: #fff;
+							border: none;
+							border-radius: 6px;
+							cursor: pointer;
+							font-weight: 600;
+							transition: background-color 0.3s ease;
+						"
+						onmouseover="this.style.background='#0056b3'"
+						onmouseout="this.style.background='#007bff'"
+					>
+						Xác nhận
+					</button>
+					<button
+						onclick="closePaymentModal()"
+						style="
+							padding: 10px 18px;
+							background: #dc3545;
+							color: #fff;
+							border: none;
+							border-radius: 6px;
+							cursor: pointer;
+							font-weight: 600;
+							transition: background-color 0.3s ease;
+						"
+						onmouseover="this.style.background='#a71d2a'"
+						onmouseout="this.style.background='#dc3545'"
+					>
+						Hủy
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Hiển thị mã COD -->
+	<div
+		id="codInfo"
+		style="
+			display: none;
+			background: #d4edda;
+			border: 1px solid #c3e6cb;
+			color: #155724;
+			padding: 10px;
+			margin: 20px auto;
+			border-radius: 5px;
+			max-width: 350px;
+			text-align: center;
+		"
+	>
+		<strong>Mã COD của bạn là:</strong> <span id="codCode"></span>
+	</div>
+
+	<script>
+		// Hàm mở popup chọn hình thức
+		function thanhToan() {
+			var c_user = getCurrentUser();
+			if (c_user.off) {
+				alert("Tài khoản của bạn hiện đang bị khóa nên không thể mua hàng!");
+				addAlertBox(
+					"Tài khoản của bạn đã bị khóa bởi Admin.",
+					"#aa0000",
+					"#fff",
+					10000
+				);
+				return;
+			}
+
+			if (!currentuser.products.length) {
+				addAlertBox("Không có mặt hàng nào cần thanh toán !!", "#ffb400", "#fff", 2000);
+				return;
+			}
+
+			document.getElementById("paymentModal").style.display = "flex";
+		}
+
+		function closePaymentModal() {
+			document.getElementById("paymentModal").style.display = "none";
+			document.getElementById("deliveryForm").style.display = "none";
+		}
+
+		function selectPickup() {
+			closePaymentModal();
+
+			currentuser.donhang.push({
+				sp: currentuser.products,
+				ngaymua: new Date(),
+				tinhTrang: "Đang chờ xử lý",
+				hinhThucNhanHang: "Nhận tại cửa hàng",
+				maCOD: null,
+				diaChi: null,
+			});
+			currentuser.products = [];
+			capNhatMoiThu();
+			addAlertBox(
+				"Đơn hàng đã được tạo và chờ xử lý. Vui lòng đến cửa hàng nhận hàng.",
+				"#17c671",
+				"#fff",
+				4000
+			);
+		}
+
+		function showDeliveryForm() {
+			document.getElementById("deliveryForm").style.display = "block";
+		}
+
+		function submitDelivery() {
+			var address = document.getElementById("deliveryAddress").value.trim();
+			if (!address) {
+				alert("Vui lòng nhập địa chỉ giao hàng");
+				return;
+			}
+			closePaymentModal();
+
+			var cod = "COD" + Math.floor(100000 + Math.random() * 900000);
+
+			currentuser.donhang.push({
+				sp: currentuser.products,
+				ngaymua: new Date(),
+				tinhTrang: "Đang chờ xử lý",
+				hinhThucNhanHang: "Giao hàng tận nơi",
+				maCOD: cod,
+				diaChi: address,
+			});
+			currentuser.products = [];
+			capNhatMoiThu();
+			addAlertBox("Đơn hàng đã được tạo. Mã COD của bạn: " + cod, "#17c671", "#fff", 6000);
+
+			var codDiv = document.getElementById("codInfo");
+			codDiv.style.display = "block";
+			document.getElementById("codCode").textContent = cod;
+		}
+	</script>
 </body>
 
 </html>

@@ -40,7 +40,7 @@ async function phanTich_URL_chiTietSanPham() {
             break;
         }
     }
-
+    console.log('mã Product:', maProduct);
     if(!maProduct) return khongTimThaySanPham();
 
     // Fetch product details from API

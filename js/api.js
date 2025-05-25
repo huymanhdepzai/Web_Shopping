@@ -19,7 +19,7 @@ async function fetchAllProducts() {
 // Fetch product details
 async function fetchProductDetails(productId) {
     try {
-        const response = await fetch(`${API_URL}/product/details/${productId}`);
+        const response = await fetch(`${API_URL}/product/details/${encodeURIComponent(productId)}`);
         const data = await response.json();
         if (data.success) {
             return data.product;
@@ -30,6 +30,7 @@ async function fetchProductDetails(productId) {
         return null;
     }
 }
+
 
 // Transform product data to match frontend format
 function transformProductData(product) {
