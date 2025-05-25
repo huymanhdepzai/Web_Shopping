@@ -1,4 +1,7 @@
-window.onload = function () {
+window.onload = async function () {
+	// Initialize products from API
+	list_products = await initializeProducts();
+	
 	khoiTao();
 
 	// Thêm hình vào banner
@@ -53,18 +56,15 @@ window.onload = function () {
 		var soLuong = (window.innerWidth < 1200 ? 4 : 5); // màn hình nhỏ thì hiển thị 4 sp, to thì hiển thị 5
 
 		// Các màu
-		var yellow_red = ['#ff9c00', '#ec1f1f'];
-		var blue = ['#42bcf4', '#004c70'];
 		var green = ['#5de272', '#007012'];
 
 		// Thêm các khung sản phẩm
 		var div = document.getElementsByClassName('contain-khungSanPham')[0];
-		addKhungSanPham('NỔI BẬT NHẤT', yellow_red, ['star=3', 'sort=rateCount-decrease'], soLuong, div);
-		addKhungSanPham('SẢN PHẨM MỚI', blue, ['promo=moiramat', 'sort=rateCount-decrease'], soLuong, div);
-		addKhungSanPham('TRẢ GÓP 0%', yellow_red, ['promo=tragop', 'sort=rateCount-decrease'], soLuong, div);
-		addKhungSanPham('GIÁ SỐC ONLINE', green, ['promo=giareonline', 'sort=rateCount-decrease'], soLuong, div);
-		addKhungSanPham('GIẢM GIÁ LỚN', yellow_red, ['promo=giamgia'], soLuong, div);
 		addKhungSanPham('GIÁ RẺ CHO MỌI NHÀ', green, ['price=0-3000000', 'sort=price'], soLuong, div);
+
+		// Hiển thị tất cả sản phẩm
+		document.getElementsByClassName('contain-products')[0].style.display = '';
+		addProductsFrom(list_products);
 	}
 
 	// Thêm chọn mức giá
@@ -665,8 +665,6 @@ function sortToString(sortBy) {
 	switch (sortBy) {
 		case 'price':
 			return 'Giá ';
-		case 'star':
-			return 'Sao ';
 		case 'rateCount':
 			return 'Đánh giá ';
 		case 'name':
