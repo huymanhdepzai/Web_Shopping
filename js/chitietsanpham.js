@@ -2,14 +2,17 @@ var nameProduct, maProduct, sanPhamHienTai; // Tên sản phẩm trong trang nà
 // là biến toàn cục để có thể dùng ở bát cứ đâu trong trang
 // không cần tính toán lấy tên từ url nhiều lần
 
-window.onload = function () {
+window.onload = async function () {
+    // Initialize products from API
+    list_products = await initializeProducts();
+    
     khoiTao();
 
     // thêm tags (từ khóa) vào khung tìm kiếm
     var tags = ["Samsung", "iPhone", "Huawei", "Oppo", "Mobi"];
     for (var t of tags) addTags(t, "index.html?search=" + t, true);
 
-    phanTich_URL_chiTietSanPham();
+    await phanTich_URL_chiTietSanPham();
 
     // autocomplete cho khung tim kiem
     autocomplete(document.getElementById('search-box'), list_products);
@@ -23,7 +26,7 @@ function khongTimThaySanPham() {
     document.getElementsByClassName('chitietSanpham')[0].style.display = 'none';
 }
 
-function phanTich_URL_chiTietSanPham() {
+async function phanTich_URL_chiTietSanPham() {
     nameProduct = window.location.href.split('?')[1]; // lấy tên
     if(!nameProduct) return khongTimThaySanPham();
 
@@ -38,8 +41,13 @@ function phanTich_URL_chiTietSanPham() {
         }
     }
 
-    sanPhamHienTai = timKiemTheoMa(list_products, maProduct);
-    if(!sanPhamHienTai) return khongTimThaySanPham();
+    if(!maProduct) return khongTimThaySanPham();
+
+    // Fetch product details from API
+    const productData = await fetchProductDetails(maProduct);
+    if(!productData) return khongTimThaySanPham();
+    
+    sanPhamHienTai = transformProductData(productData);
 
     var divChiTiet = document.getElementsByClassName('chitietSanpham')[0];
 
@@ -98,13 +106,11 @@ function phanTich_URL_chiTietSanPham() {
     document.getElementById('bigimg').src = sanPhamHienTai.img;
 
     // Hình nhỏ
-    addSmallImg("img/products/huawei-mate-20-pro-green-600x600.jpg");
-    addSmallImg("img/chitietsanpham/oppo-f9-mau-do-1-org.jpg");
-    addSmallImg("img/chitietsanpham/oppo-f9-mau-do-2-org.jpg");
-    addSmallImg("img/chitietsanpham/oppo-f9-mau-do-3-org.jpg");
-    addSmallImg("img/products/huawei-mate-20-pro-green-600x600.jpg");
-    addSmallImg("img/chitietsanpham/oppo-f9-mau-do-3-org.jpg");
-    addSmallImg("img/products/huawei-mate-20-pro-green-600x600.jpg");
+    if(productData.img && productData.img.length > 0) {
+        productData.img.forEach(img => {
+            addSmallImg(img);
+        });
+    }
 
     // Khởi động thư viện hỗ trợ banner - chỉ chạy sau khi tạo xong hình nhỏ
     var owl = $('.owl-carousel');
