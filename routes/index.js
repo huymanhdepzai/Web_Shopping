@@ -10,6 +10,7 @@ const authToken = require("../middleware/authToken");
 const loginRoute = require("../controller/user/login");
 const registerRoute = require("../controller/user/signup");
 const logoutRoute = require("../controller/user/logout");
+const getCurrentUserRoute = require("../controller/user/getCurrentUser");
 const addProductRoute = require("../controller/product/addProduct");
 const getProductsRoute = require('../controller/product/getProduct');
 const getProductDetailsRoute = require('../controller/product/getProductDetails');
@@ -18,6 +19,7 @@ const getProductDetailsRoute = require('../controller/product/getProductDetails'
 router.post("/login", loginRoute);
 router.post("/signup", registerRoute);
 router.get("/logout", logoutRoute)
+router.get("/currentUser", authToken, getCurrentUserRoute);
 
 //search
 router.get("/search", searchRoute);

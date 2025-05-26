@@ -13,13 +13,33 @@ function setListAdmin(l) {
 
 
 // Hàm khởi tạo, tất cả các trang đều cần
-function khoiTao() {
+async function khoiTao() {
     // get data từ localstorage
     list_products = getListProducts() || list_products;
     adminInfo = getListAdmin() || adminInfo;
 
     setupEventTaiKhoan();
-    capNhat_ThongTin_CurrentUser();
+    
+    // Kiểm tra xem API functions đã được load chưa
+    if (typeof getCartData === 'function') {
+        await capNhat_ThongTin_CurrentUser();
+    } else {
+        console.warn('Cart API functions not loaded yet');
+        // Fallback to old behavior
+        const u = getCurrentUser();
+        if (u) {
+            document.getElementsByClassName('cart-number')[0].innerHTML = getTongSoLuongSanPhamTrongGioHang(u);
+            document.getElementsByClassName('member')[0]
+                .getElementsByTagName('a')[0].childNodes[2].nodeValue = ' ' + u.username;
+            document.getElementsByClassName('menuMember')[0]
+                .classList.remove('hide');
+        } else {
+            document.getElementsByClassName('cart-number')[0].innerHTML = '';
+            document.getElementsByClassName('menuMember')[0]
+                .classList.add('hide');
+        }
+    }
+    
     addEventCloseAlertButton();
 }
 
@@ -106,7 +126,14 @@ function animateCartNumber() {
     }, 1200);
 }
 
-function themVaoGioHang(masp, tensp) {
+async function themVaoGioHang(productId, tensp) {
+    // Validate productId
+    if (!productId) {
+        console.error('Product ID is missing');
+        addAlertBox('Không thể thêm sản phẩm: ID sản phẩm không hợp lệ', '#aa0000', '#fff', 3500);
+        return;
+    }
+
     var user = getCurrentUser();
     if (!user) {
         alert('Bạn cần đăng nhập để mua hàng !');
@@ -118,38 +145,28 @@ function themVaoGioHang(masp, tensp) {
         addAlertBox('Tài khoản của bạn đã bị khóa bởi Admin.', '#aa0000', '#fff', 10000);
         return;
     }
-    var t = new Date();
-    var daCoSanPham = false;;
 
-    for (var i = 0; i < user.products.length; i++) { // check trùng sản phẩm
-        if (user.products[i].ma == masp) {
-            user.products[i].soluong++;
-            daCoSanPham = true;
-            break;
+    try {
+        const result = await addToCart(productId, 1);
+        if (result) {
+            animateCartNumber();
+            addAlertBox('Đã thêm ' + tensp + ' vào giỏ.', '#17c671', '#fff', 3500);
+            capNhat_ThongTin_CurrentUser();
+        } else {
+            addAlertBox('Không thể thêm sản phẩm vào giỏ hàng', '#aa0000', '#fff', 3500);
         }
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        addAlertBox('Có lỗi xảy ra khi thêm vào giỏ hàng', '#aa0000', '#fff', 3500);
     }
-
-    if (!daCoSanPham) { // nếu không trùng thì mới thêm sản phẩm vào user.products
-        user.products.push({
-            "ma": masp,
-            "soluong": 1,
-            "date": t
-        });
-    }
-
-    animateCartNumber();
-    addAlertBox('Đã thêm ' + tensp + ' vào giỏ.', '#17c671', '#fff', 3500);
-
-    setCurrentUser(user); // cập nhật giỏ hàng cho user hiện tại
-    updateListUser(user); // cập nhật list user
-    capNhat_ThongTin_CurrentUser(); // cập nhật giỏ hàng
 }
 
 // ============================== TÀI KHOẢN ============================
 
 // Hàm get set cho người dùng hiện tại đã đăng nhập
 function getCurrentUser() {
-    return JSON.parse(window.localStorage.getItem('CurrentUser')); // Lấy dữ liệu từ localstorage
+    const user = JSON.parse(window.localStorage.getItem('CurrentUser'));
+    return user || null; // Trả về null nếu không có user
 }
 
 function setCurrentUser(u) {
@@ -181,89 +198,104 @@ function updateListUser(u, newData) {
     setListUser(list);
 }
 
-function logIn(form) {
-    // Lấy dữ liệu từ form
-    var name = form.username.value;
-    var pass = form.pass.value;
-    var newUser = new User(name, pass);
+async function logIn(form) {
+    try {
+        // Prevent default form submission
+        event.preventDefault();
 
-    // Lấy dữ liệu từ danh sách người dùng localstorage
-    var listUser = getListUser();
+        const credentials = {
+            usernameOrEmail: form.username.value,
+            password: form.pass.value
+        };
 
-    // Kiểm tra xem dữ liệu form có khớp với người dùng nào trong danh sách ko
-    for (var u of listUser) {
-        if (equalUser(newUser, u)) {
-            if(u.off) {
-                alert('Tài khoản này đang bị khoá. Không thể đăng nhập.');
+        const data = await apiLogin(credentials);
+        
+        if (data.success) {
+            // Store user data
+            const user = {
+                username: data.user.username,
+                email: data.user.email,
+                fullName: data.user.fullName,
+                isAdmin: data.user.isAdmin,
+                products: []
+            };
+            localStorage.setItem('CurrentUser', JSON.stringify(user));
+
+            // Redirect if admin
+            if (data.user.isAdmin) {
+                window.location.assign('admin.html');
                 return false;
             }
 
-            setCurrentUser(u);
-
-            // Reload lại trang -> sau khi reload sẽ cập nhật luôn giỏ hàng khi hàm setupEventTaiKhoan chạy
+            alert('Đăng nhập thành công!');
             location.reload();
-            return false;
+        } else {
+            alert(data.message || 'Đăng nhập thất bại!');
         }
+    } catch (error) {
+        console.error('Error during login:', error);
+        alert('Có lỗi xảy ra khi đăng nhập!');
     }
-
-    // Đăng nhập vào admin
-    for (var ad of adminInfo) {
-        if (equalUser(newUser, ad)) {
-            alert('Xin chào admin .. ');
-            window.localStorage.setItem('admin', true);
-            window.location.assign('admin.html');
-            return false;
-        }
-    }
-
-    // Trả về thông báo nếu không khớp
-    alert('Nhập sai tên hoặc mật khẩu !!!');
-    form.username.focus();
     return false;
 }
 
-function signUp(form) {
-    var ho = form.ho.value;
-    var ten = form.ten.value;
-    var email = form.email.value;
-    var username = form.newUser.value;
-    var pass = form.newPass.value;
-    var newUser = new User(username, pass, ho, ten, email);
+async function signUp(form) {
+    try {
+        // Prevent default form submission
+        event.preventDefault();
+        
+        const userData = {
+            username: form.newUser.value,
+            password: form.newPass.value,
+            email: form.email.value,
+            fullName: form.ho.value,
+            address: form.address.value,
+            phone: form.phone.value
+        };
 
-    // Lấy dữ liệu các khách hàng hiện có
-    var listUser = getListUser();
-
-    // Kiểm tra trùng admin
-    for (var ad of adminInfo) {
-        if (newUser.username == ad.username) {
-            alert('Tên đăng nhập đã có người sử dụng !!');
-            return false;
+        const data = await apiSignUp(userData);
+        
+        if (data.success) {
+            // Store user data after successful signup
+            const user = {
+                username: data.user.username,
+                email: data.user.email,
+                fullName: data.user.fullName,
+                isAdmin: data.user.isAdmin,
+                products: []
+            };
+            localStorage.setItem('CurrentUser', JSON.stringify(user));
+            
+            alert('Đăng kí thành công, Bạn sẽ được tự động đăng nhập!');
+            location.reload();
+        } else {
+            alert(data.message || 'Đăng ký thất bại!');
         }
+    } catch (error) {
+        console.error('Error during signup:', error);
+        alert('Có lỗi xảy ra khi đăng ký!');
     }
-
-    // Kiểm tra xem dữ liệu form có trùng với khách hàng đã có không
-    for (var u of listUser) {
-        if (newUser.username == u.username) {
-            alert('Tên đăng nhập đã có người sử dụng !!');
-            return false;
-        }
-    }
-
-    // Lưu người mới vào localstorage
-    listUser.push(newUser);
-    window.localStorage.setItem('ListUser', JSON.stringify(listUser));
-
-    // Đăng nhập vào tài khoản mới tạo
-    window.localStorage.setItem('CurrentUser', JSON.stringify(newUser));
-    alert('Đăng kí thành công, Bạn sẽ được tự động đăng nhập!');
-    location.reload();
-
     return false;
 }
 
-function logOut() {
-    window.localStorage.removeItem('CurrentUser');
-    location.reload();
+async function logOut() {
+    try {
+        const data = await apiLogout();
+        if (data.success) {
+            // Clear local storage
+            localStorage.removeItem('CurrentUser');
+            localStorage.removeItem('token');
+            location.reload();
+        } else {
+            alert(data.message || 'Đăng xuất thất bại!');
+        }
+    } catch (error) {
+        console.error('Error during logout:', error);
+        // Force clear local storage and reload even if API call fails
+        localStorage.removeItem('CurrentUser');
+        localStorage.removeItem('token');
+        location.reload();
+    }
 }
 
 // Hiển thị form tài khoản, giá trị truyền vào là true hoặc false
@@ -342,17 +374,31 @@ function setupEventTaiKhoan() {
 }
 
 // Cập nhật số lượng hàng trong giỏ hàng + Tên current user
-function capNhat_ThongTin_CurrentUser() {
+async function capNhat_ThongTin_CurrentUser() {
     var u = getCurrentUser();
     if (u) {
-        // Cập nhật số lượng hàng vào header
-        document.getElementsByClassName('cart-number')[0].innerHTML = getTongSoLuongSanPhamTrongGioHang(u);
-        // Cập nhật tên người dùng
-        document.getElementsByClassName('member')[0]
-            .getElementsByTagName('a')[0].childNodes[2].nodeValue = ' ' + u.username;
-        // bỏ class hide của menu người dùng
+        try {
+            const cartData = await getCartData();
+            if (cartData) {
+                // Cập nhật số lượng hàng vào header
+                const totalItems = cartData.cart.reduce((sum, item) => sum + item.quantity, 0);
+                document.getElementsByClassName('cart-number')[0].innerHTML = totalItems;
+                
+                // Cập nhật tên người dùng
+                document.getElementsByClassName('member')[0]
+                    .getElementsByTagName('a')[0].childNodes[2].nodeValue = ' ' + u.username;
+                // bỏ class hide của menu người dùng
+                document.getElementsByClassName('menuMember')[0]
+                    .classList.remove('hide');
+            }
+        } catch (error) {
+            console.error('Error updating cart info:', error);
+        }
+    } else {
+        // Nếu không có user, ẩn cart number và menu member
+        document.getElementsByClassName('cart-number')[0].innerHTML = '';
         document.getElementsByClassName('menuMember')[0]
-            .classList.remove('hide');
+            .classList.add('hide');
     }
 }
 
@@ -509,10 +555,10 @@ function addTags(nameTag, link) {
 
 // Thêm sản phẩm vào trang
 function addProduct(p, ele, returnString) {
-	promo = new Promo(p.promo.name, p.promo.value); // class Promo
-	product = new Product(p.masp, p.name, p.img, p.price, p.star, p.rateCount, promo); // Class product
+    promo = new Promo(p.promo.name, p.promo.value); // class Promo
+    product = new Product(p.productId, p.productName, p.img, p.price, p.salePrice, p.category, p.brandName, p.stock, p.description, p.isActive); // Class product
 
-	return addToWeb(product, ele, returnString);
+    return addToWeb(product, ele, returnString);
 }
 
 // Thêm topnav vào trang
@@ -654,50 +700,52 @@ function addContainTaiKhoan() {
                 <div id="signup">
                     <h1>Đăng kí miễn phí</h1>
 
-                    <form onsubmit="return signUp(this);">
-
-                        <div class="top-row">
-                            <div class="field-wrap">
-                                <label>
-                                    Họ<span class="req">*</span>
-                                </label>
-                                <input name="ho" type="text" required autocomplete="off" />
-                            </div>
-
-                            <div class="field-wrap">
-                                <label>
-                                    Tên<span class="req">*</span>
-                                </label>
-                                <input name="ten" type="text" required autocomplete="off" />
-                            </div>
-                        </div> <!-- / ho ten -->
+                    <form onsubmit="return signUp(this);" id="signupForm">
+                        <div class="field-wrap">
+                            <label>
+                                Họ tên<span class="req">*</span>
+                            </label>
+                            <input name="ho" type="text" required autocomplete="off" />
+                        </div>
 
                         <div class="field-wrap">
                             <label>
-                                Địa chỉ Email<span class="req">*</span>
+                                Địa chỉ<span class="req">*</span>
+                            </label>
+                            <input name="address" type="text" required autocomplete="off" />
+                        </div>
+
+                        <div class="field-wrap">
+                            <label>
+                                Số điện thoại<span class="req">*</span>
+                            </label>
+                            <input name="phone" type="number" required autocomplete="off" />
+                        </div>
+
+                        <div class="field-wrap">
+                            <label>
+                                Email<span class="req">*</span>
                             </label>
                             <input name="email" type="email" required autocomplete="off" />
-                        </div> <!-- /email -->
+                        </div>
 
                         <div class="field-wrap">
                             <label>
                                 Tên đăng nhập<span class="req">*</span>
                             </label>
                             <input name="newUser" type="text" required autocomplete="off" />
-                        </div> <!-- /user name -->
+                        </div>
 
                         <div class="field-wrap">
                             <label>
                                 Mật khẩu<span class="req">*</span>
                             </label>
                             <input name="newPass" type="password" required autocomplete="off" />
-                        </div> <!-- /pass -->
+                        </div>
 
-                        <button type="submit" class="button button-block" />Tạo tài khoản</button>
-
-                    </form> <!-- /form -->
-
-                </div> <!-- /sign up -->
+                        <button type="submit" class="button button-block">Tạo tài khoản</button>
+                    </form>
+                </div>
             </div><!-- tab-content -->
 
         </div> <!-- /taikhoan -->

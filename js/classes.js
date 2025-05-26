@@ -47,14 +47,17 @@ function Promo(name, value) { // khuyen mai
 	}
 }
 
-function Product(masp, name, img, price, star, rateCount, promo) {
-	this.masp = masp;
+function Product(productId, productName, img, price, salePrice, category, brandName, stock, description, isActive) {
+	this.productId = productId;
+	this.productName = productName;
 	this.img = img;
-	this.name = name;
 	this.price = price;
-	this.star = star;
-	this.rateCount = rateCount;
-	this.promo = promo;
+	this.salePrice = salePrice;
+	this.category = category;
+	this.brandName = brandName;
+	this.stock = stock;
+	this.description = description;
+	this.isActive = isActive;
 }
 
 function addToWeb(p, ele, returnString) {
@@ -73,31 +76,28 @@ function addToWeb(p, ele, returnString) {
 
 	// Chuyển giá tiền sang dạng tag html
 	var price = `<strong>` + p.price + `&#8363;</strong>`;
-	if (p.promo && p.promo.name == "giareonline") {
-		// khuyến mãi 'Giá rẻ online' sẽ có giá thành mới
-		price = `<strong>` + p.promo.value + `&#8363;</strong>
+	if (p.salePrice) {
+		price = `<strong>` + p.salePrice + `&#8363;</strong>
 				<span>` + p.price + `&#8363;</span>`;
 	}
 
-	// tách theo dấu ' ' vào gắn lại bằng dấu '-', code này giúp bỏ hết khoảng trắng và thay vào bằng dấu '-'.
-	// Tạo link tới chi tiết sản phẩm, chuyển tất cả ' ' thành '-'
-	var chitietSp = 'chitietsanpham.html?' + p.name.split(' ').join('-');
+	// Tạo link tới chi tiết sản phẩm
+	var chitietSp = 'chitietsanpham.html?' + p.productName.split(' ').join('-');
 
 	// Cho mọi thứ vào tag <li>... </li>
 	var newLi =
 	`<li class="sanPham">
 		<a href="` + chitietSp + `">
 			<img src=` + p.img + ` alt="">
-			<h3>` + p.name + `</h3>
+			<h3>` + p.productName + `</h3>
 			<div class="price">
 				` + price + `
 			</div>
 			<div class="ratingresult">
 				` + rating + `
 			</div>
-			` + (p.promo && p.promo.toWeb()) + `
 			<div class="tooltip">
-				<button class="themvaogio" onclick="themVaoGioHang('`+p.masp+`', '`+p.name+`'); return false;">
+				<button class="themvaogio" onclick="themVaoGioHang('`+p.productId+`', '`+p.productName+`'); return false;">
 					<span class="tooltiptext" style="font-size: 15px;">Thêm vào giỏ</span>
 					+
 				</button>
