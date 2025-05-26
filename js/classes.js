@@ -75,11 +75,7 @@ function addToWeb(p, ele, returnString) {
 	}
 
 	// Chuyển giá tiền sang dạng tag html
-	var price = `<strong>` + p.price + `&#8363;</strong>`;
-	if (p.salePrice) {
-		price = `<strong>` + p.salePrice + `&#8363;</strong>
-				<span>` + p.price + `&#8363;</span>`;
-	}
+	var price = `<strong>` + (p.salePrice || p.price) + `&#8363;</strong>`;
 
 	// Tạo link tới chi tiết sản phẩm
 	var chitietSp = 'chitietsanpham.html?' + p.productName.split(' ').join('-');
@@ -88,7 +84,7 @@ function addToWeb(p, ele, returnString) {
 	var newLi =
 	`<li class="sanPham">
 		<a href="` + chitietSp + `">
-			<img src=` + p.img + ` alt="">
+			<img src="` + p.img + `" alt="` + p.productName + `">
 			<h3>` + p.productName + `</h3>
 			<div class="price">
 				` + price + `
@@ -109,5 +105,28 @@ function addToWeb(p, ele, returnString) {
 
 	// Thêm tag <li> vừa tạo vào <ul> homeproduct (mặc định) , hoặc tag ele truyền vào
 	var products = ele || document.getElementById('products');
-	products.innerHTML += newLi;
+	if (products) {
+		products.innerHTML += newLi;
+	} else {
+		console.error('Không tìm thấy element để thêm sản phẩm');
+	}
+}
+
+// Thêm sản phẩm vào trang
+function addProduct(p, ele, returnString) {
+	// Tạo sản phẩm mới với dữ liệu từ API
+	product = new Product(
+		p.productId,           
+		p.productName,   
+		p.img,                 
+		p.price,               
+		p.salePrice,           
+		p.category,            
+		p.brandName,           
+		p.stock,               
+		p.description,         
+		p.isActive            
+	);
+
+	return addToWeb(product, ele, returnString);
 }

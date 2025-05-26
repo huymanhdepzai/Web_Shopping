@@ -14,8 +14,15 @@ function setListAdmin(l) {
 
 // Hàm khởi tạo, tất cả các trang đều cần
 async function khoiTao() {
+    // Initialize products from API
+    try {
+        window.list_products = await initializeProducts();
+    } catch (error) {
+        console.error('Error initializing products:', error);
+        window.list_products = [];
+    }
+
     // get data từ localstorage
-    list_products = getListProducts() || list_products;
     adminInfo = getListAdmin() || adminInfo;
 
     setupEventTaiKhoan();
@@ -61,7 +68,7 @@ function timKiemTheoTen(list, ten, soluong) {
     for (var sp of tempList) {
         var correct = true;
         for (var t of ten) {
-            if (sp.name.toUpperCase().indexOf(t.toUpperCase()) < 0) {
+            if (sp.productName.toUpperCase().indexOf(t.toUpperCase()) < 0) {
                 correct = false;
                 break;
             }
@@ -134,24 +141,29 @@ async function themVaoGioHang(productId, tensp) {
         return;
     }
 
-    var user = getCurrentUser();
-    if (!user) {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (!token) {
         alert('Bạn cần đăng nhập để mua hàng !');
         showTaiKhoan(true);
         return;
     }
-    if (user.off) {
+
+    // Check if user account is locked
+    const user = getCurrentUser();
+    if (user && user.off) {
         alert('Tài khoản của bạn hiện đang bị khóa nên không thể mua hàng!');
         addAlertBox('Tài khoản của bạn đã bị khóa bởi Admin.', '#aa0000', '#fff', 10000);
         return;
     }
 
     try {
+        console.log('Adding to cart:', { productId, quantity: 1 }); // Debug log
         const result = await addToCart(productId, 1);
         if (result) {
             animateCartNumber();
             addAlertBox('Đã thêm ' + tensp + ' vào giỏ.', '#17c671', '#fff', 3500);
-            capNhat_ThongTin_CurrentUser();
+            await capNhat_ThongTin_CurrentUser();
         } else {
             addAlertBox('Không thể thêm sản phẩm vào giỏ hàng', '#aa0000', '#fff', 3500);
         }
@@ -375,33 +387,41 @@ function setupEventTaiKhoan() {
 
 // Cập nhật số lượng hàng trong giỏ hàng + Tên current user
 async function capNhat_ThongTin_CurrentUser() {
-    var u = getCurrentUser();
+    const u = getCurrentUser();
+    const cartNumberEl = document.querySelector('.cart-number');
+    const menuMemberEl = document.querySelector('.menuMember');
+  
     if (u) {
-        try {
-            const cartData = await getCartData();
-            if (cartData) {
-                // Cập nhật số lượng hàng vào header
-                const totalItems = cartData.cart.reduce((sum, item) => sum + item.quantity, 0);
-                document.getElementsByClassName('cart-number')[0].innerHTML = totalItems;
-                
-                // Cập nhật tên người dùng
-                document.getElementsByClassName('member')[0]
-                    .getElementsByTagName('a')[0].childNodes[2].nodeValue = ' ' + u.username;
-                // bỏ class hide của menu người dùng
-                document.getElementsByClassName('menuMember')[0]
-                    .classList.remove('hide');
-            }
-        } catch (error) {
-            console.error('Error updating cart info:', error);
+      try {
+        const cartData = await getCartData();
+        const totalItems = cartData?.cart?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  
+        if (totalItems > 0) {
+          cartNumberEl.textContent = totalItems;
+          cartNumberEl.style.display = 'flex'; // Hiển thị số lượng
+          animateCartNumber(); // Gọi hiệu ứng
+        } else {
+          cartNumberEl.style.display = 'none'; // Ẩn khi không có sản phẩm
         }
+  
+        // Cập nhật tên người dùng
+        const memberLink = document.querySelector('.member a');
+        if (memberLink && memberLink.childNodes.length >= 3) {
+          memberLink.childNodes[2].nodeValue = ' ' + u.username;
+        }
+  
+        // Hiển thị menu người dùng
+        menuMemberEl.classList.remove('hide');
+      } catch (error) {
+        console.error('Lỗi khi cập nhật thông tin giỏ hàng:', error);
+      }
     } else {
-        // Nếu không có user, ẩn cart number và menu member
-        document.getElementsByClassName('cart-number')[0].innerHTML = '';
-        document.getElementsByClassName('menuMember')[0]
-            .classList.add('hide');
+      // Ẩn số lượng và menu người dùng khi không có user
+      cartNumberEl.style.display = 'none';
+      menuMemberEl.classList.add('hide');
     }
-}
-
+  }
+  
 // tính tổng số lượng các sản phẩm của user u truyền vào
 function getTongSoLuongSanPhamTrongGioHang(u) {
     var soluong = 0;
@@ -555,8 +575,19 @@ function addTags(nameTag, link) {
 
 // Thêm sản phẩm vào trang
 function addProduct(p, ele, returnString) {
-    promo = new Promo(p.promo.name, p.promo.value); // class Promo
-    product = new Product(p.productId, p.productName, p.img, p.price, p.salePrice, p.category, p.brandName, p.stock, p.description, p.isActive); // Class product
+    // Tạo sản phẩm mới với dữ liệu từ API
+    product = new Product(
+        p.productId,           
+        p.productName,   
+        p.img,                 
+        parseFloat(p.price),   // Convert price to number
+        p.salePrice,           
+        p.category,            
+        p.brandName,           
+        p.stock,               
+        p.description,         
+        p.isActive            
+    );
 
     return addToWeb(product, ele, returnString);
 }

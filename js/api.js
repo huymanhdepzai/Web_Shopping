@@ -16,54 +16,29 @@ async function fetchAllProducts() {
     }
 }
 
-// Fetch product details
-async function fetchProductDetails(productId) {
-    try {
-        const response = await fetch(`${API_URL}/product/details/${encodeURIComponent(productId)}`);
-        const data = await response.json();
-        if (data.success) {
-            return data.product;
-        }
-        throw new Error(data.message);
-    } catch (error) {
-        console.error('Error fetching product details:', error);
-        return null;
-    }
-}
-
-
 // Transform product data to match frontend format
 function transformProductData(product) {
-    console.log('Original product data:', product); // Debug log
     
-    // Đảm bảo dữ liệu trả về có cùng cấu trúc với dữ liệu local
     const transformedProduct = {
-        productId: product.productId || product._id || '', 
-        name: product.productName || product.name || '',
+        productId: product.productId || product._id || '',
+        productName: product.productName || product.name || '',
         price: product.price ? product.price.toString() : '0',
         salePrice: product.salePrice || '',
         img: product.img && product.img.length > 0 ? product.img[0] : '',
         company: product.brandName || '',
         star: product.star || 0,
         rateCount: product.rateCount || 0,
+        category: product.category || '',
+        stock: product.stock || 0,
+        description: product.description || {},
+        isActive: product.isActive || true,
         promo: {
             name: 'none',
             value: product.price ? product.price.toString() : '0'
-        },
-        detail: {
-            screen: product.description?.specifications?.screen || '',
-            os: product.description?.specifications?.operatingSystem || '',
-            camara: product.description?.specifications?.rearCamera || '',
-            camaraFront: product.description?.specifications?.frontCamera || '',
-            cpu: product.description?.specifications?.cpu || '',
-            ram: product.description?.specifications?.ram || '',
-            rom: product.description?.specifications?.storage || '',
-            microUSB: product.description?.specifications?.externalStorage || '',
-            battery: product.description?.specifications?.battery || ''
         }
     };
     
-    console.log('Transformed product:', transformedProduct); // Debug log
+    // Debug log
     return transformedProduct;
 }
 
@@ -192,19 +167,44 @@ async function getCurrentUser() {
 async function getCartData() {
     try {
         const token = localStorage.getItem('token');
-        if (!token) return null;
+        if (!token) {
+            console.error('No token found');
+            return null;
+        }
+
+        console.log('Fetching cart data with token:', token); // Debug log
 
         const response = await fetch(`${API_URL}/cart/data`, {
+            method: 'GET',
             headers: {
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             credentials: 'include'
         });
+
+        console.log('Cart API response status:', response.status); // Debug log
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                // Token expired or invalid
+                localStorage.removeItem('token');
+                throw new Error('Unauthorized');
+            }
+            throw new Error('Failed to get cart data');
+        }
+
         const data = await response.json();
-        return data.success ? data : null;
+        console.log('Cart API response data:', data); // Debug log
+
+        if (data.success) {
+            // Cart items are already in the correct format from the backend
+            return data;
+        }
+        throw new Error(data.message || 'Failed to get cart data');
     } catch (error) {
         console.error('Error getting cart data:', error);
-        return null;
+        throw error;
     }
 }
 
@@ -213,56 +213,67 @@ async function addToCart(productId, quantity) {
         const token = localStorage.getItem('token');
         if (!token) {
             console.error('No token found');
-            return null;
+            return false;
         }
 
-        if (!productId) {
-            console.error('Product ID is missing');
-            return null;
-        }
-
-        console.log('Sending request to add to cart:', { productId, quantity }); // Debug log
+        console.log('Making API call to add to cart:', { productId, quantity }); // Debug log
 
         const response = await fetch(`${API_URL}/cart/addToCart`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ 
-                productId: productId.toString(), // Ensure productId is a string
-                quantity: parseInt(quantity) // Ensure quantity is a number
-            }),
-            credentials: 'include'
+            body: JSON.stringify({ productId, quantity })
         });
 
+        if (!response.ok) {
+            if (response.status === 401) {
+                // Token expired or invalid
+                localStorage.removeItem('token');
+                throw new Error('Unauthorized');
+            }
+            throw new Error('Failed to add item to cart');
+        }
+
         const data = await response.json();
-        console.log('Add to cart response:', data); // Debug log
-        return data.success ? data : null;
+        console.log('API response:', data); // Debug log
+
+        if (data.success) {
+            return true;
+        }
+        throw new Error(data.message || 'Failed to add item to cart');
     } catch (error) {
-        console.error('Error adding to cart:', error);
-        return null;
+        console.error('Error adding item to cart:', error);
+        return false;
     }
 }
 
 async function removeFromCart(productId) {
     try {
         const token = localStorage.getItem('token');
-        if (!token) return null;
+        if (!token) {
+            console.error('No token found');
+            return false;
+        }
 
         const response = await fetch(`${API_URL}/cart/delete`, {
             method: 'DELETE',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ productId }),
-            credentials: 'include'
+            body: JSON.stringify({ productId })
         });
         const data = await response.json();
-        return data.success ? data : null;
+        if (data.success) {
+            return true;
+        }
+        throw new Error(data.message || 'Failed to remove item from cart');
     } catch (error) {
-        console.error('Error removing from cart:', error);
-        return null;
+        console.error('Error removing item from cart:', error);
+        return false;
     }
 } 
