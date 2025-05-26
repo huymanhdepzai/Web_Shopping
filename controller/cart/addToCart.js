@@ -15,15 +15,19 @@ module.exports = async (req, res) => {
 
     if (!req.session.cart) req.session.cart = [];
 
-    const existingItem = req.session.cart.find(item => item.product.productId === product.productId);
+    const existingItem = req.session.cart.find(item => item.productId === product.productId);
     if (existingItem) {
       existingItem.quantity += quantity;
       existingItem.total = existingItem.quantity * product.price;
     } else {
       req.session.cart.push({
-        product,
+        productId: product.productId,
+        productName: product.productName,
+        price: product.price,
+        img: product.img,
         quantity,
-        total: quantity * product.price
+        total: quantity * product.price,
+        addedAt: new Date().toISOString()
       });
     }
 
