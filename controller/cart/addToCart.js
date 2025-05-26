@@ -8,22 +8,26 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, message: "Thiếu thông tin hoặc số lượng không hợp lệ" });
     }
 
-    const product = await Product.findById(productId);
+    const product = await Product.findOne({ productId: productId });
     if (!product) {
       return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm" });
     }
 
     if (!req.session.cart) req.session.cart = [];
 
-    const existingItem = req.session.cart.find(item => item.product._id.equals(product._id));
+    const existingItem = req.session.cart.find(item => item.productId === product.productId);
     if (existingItem) {
       existingItem.quantity += quantity;
       existingItem.total = existingItem.quantity * product.price;
     } else {
       req.session.cart.push({
-        product,
+        productId: product.productId,
+        productName: product.productName,
+        price: product.price,
+        img: product.img,
         quantity,
-        total: quantity * product.price
+        total: quantity * product.price,
+        addedAt: new Date().toISOString()
       });
     }
 

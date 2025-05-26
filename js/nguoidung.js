@@ -231,14 +231,23 @@ function addTatCaDonHang(user) {
     }
 }
 
-function addDonHang(dh) {
-    var div = document.getElementsByClassName('listDonHang')[0];
+async function addDonHang(dh) {
+    try {
+        const cartData = await getCartData();
+        if (!cartData || !cartData.cart || cartData.cart.length === 0) {
+            document.getElementsByClassName('listDonHang')[0].innerHTML = `
+                <h3 style="width=100%; padding: 50px; color: green; font-size: 2em; text-align: center"> 
+                    Xin chào ${currentUser.username}. Bạn chưa có đơn hàng nào.
+                </h3>`;
+            return;
+        }
 
-    var s = `
+        var div = document.getElementsByClassName('listDonHang')[0];
+        var s = `
             <table class="listSanPham">
                 <tr> 
                     <th colspan="6">
-                        <h3 style="text-align:center;"> Đơn hàng ngày: ` + new Date(dh.ngaymua).toLocaleString() + `</h3> 
+                        <h3 style="text-align:center;">Giỏ hàng hiện tại</h3> 
                     </th>
                 </tr>
                 <tr>
@@ -247,48 +256,48 @@ function addDonHang(dh) {
                     <th>Giá</th>
                     <th>Số lượng</th>
                     <th>Thành tiền</th>
-                    <th>Thời gian thêm vào giỏ</th> 
+                    <th>Thao tác</th> 
                 </tr>`;
 
-    var totalPrice = 0;
-    for (var i = 0; i < dh.sp.length; i++) {
-        var masp = dh.sp[i].ma;
-        var soluongSp = dh.sp[i].soluong;
-        var p = timKiemTheoMa(list_products, masp);
-        var price = (p.promo.name == 'giareonline' ? p.promo.value : p.price);
-        var thoigian = new Date(dh.sp[i].date).toLocaleString();
-        var thanhtien = stringToNum(price) * soluongSp;
+        var totalPrice = 0;
+        cartData.cart.forEach((item, index) => {
+            const p = item.product;
+            const price = p.price;
+            const quantity = item.quantity;
+            const thanhtien = price * quantity;
+            totalPrice += thanhtien;
 
-        s += `
+            s += `
                 <tr>
-                    <td>` + (i + 1) + `</td>
+                    <td>${index + 1}</td>
                     <td class="noPadding imgHide">
-                        <a target="_blank" href="chitietsanpham.html?` + p.name.split(' ').join('-') + `" title="Xem chi tiết">
-                            ` + p.name + `
-                            <img src="` + p.img + `">
+                        <a target="_blank" href="chitietsanpham.html?${p.name.split(' ').join('-')}" title="Xem chi tiết">
+                            ${p.name}
+                            <img src="${p.img}">
                         </a>
                     </td>
-                    <td class="alignRight">` + price + ` ₫</td>
-                    <td class="soluong" >
-                         ` + soluongSp + `
+                    <td class="alignRight">${price} ₫</td>
+                    <td class="soluong">${quantity}</td>
+                    <td class="alignRight">${numToString(thanhtien)} ₫</td>
+                    <td style="text-align: center">
+                        <button onclick="removeFromCart('${p._id}')">Xóa</button>
                     </td>
-                    <td class="alignRight">` + numToString(thanhtien) + ` ₫</td>
-                    <td style="text-align: center" >` + thoigian + `</td>
                 </tr>
             `;
-        totalPrice += thanhtien;
-        tongSanPhamTatCaDonHang += soluongSp;
-    }
-    tongTienTatCaDonHang += totalPrice;
+        });
 
-    s += `
-                <tr style="font-weight:bold; text-align:center; height: 4em;">
-                    <td colspan="4">TỔNG TIỀN: </td>
-                    <td class="alignRight">` + numToString(totalPrice) + ` ₫</td>
-                    <td > ` + dh.tinhTrang + ` </td>
-                </tr>
-            </table>
-            <hr>
-        `;
-    div.innerHTML += s;
+        s += `
+            <tr style="font-weight:bold; text-align:center; height: 4em;">
+                <td colspan="4">TỔNG TIỀN: </td>
+                <td class="alignRight">${numToString(totalPrice)} ₫</td>
+                <td></td>
+            </tr>
+        </table>
+        <hr>
+    `;
+        div.innerHTML = s;
+    } catch (error) {
+        console.error('Error loading cart:', error);
+        addAlertBox('Có lỗi xảy ra khi tải giỏ hàng', '#aa0000', '#fff', 3500);
+    }
 }

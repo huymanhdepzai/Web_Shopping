@@ -3,9 +3,6 @@ var nameProduct, maProduct, sanPhamHienTai; // Tên sản phẩm trong trang nà
 // không cần tính toán lấy tên từ url nhiều lần
 
 window.onload = async function () {
-    // Initialize products from API
-    list_products = await initializeProducts();
-    
     khoiTao();
 
     // thêm tags (từ khóa) vào khung tìm kiếm
@@ -15,7 +12,7 @@ window.onload = async function () {
     await phanTich_URL_chiTietSanPham();
 
     // autocomplete cho khung tim kiem
-    autocomplete(document.getElementById('search-box'), list_products);
+    autocomplete(document.getElementById('search-box'), []);
 
     // Thêm gợi ý sản phẩm
     sanPhamHienTai && suggestion();
@@ -27,27 +24,19 @@ function khongTimThaySanPham() {
 }
 
 async function phanTich_URL_chiTietSanPham() {
-    nameProduct = window.location.href.split('?')[1]; // lấy tên
-    if(!nameProduct) return khongTimThaySanPham();
-
-    // tách theo dấu '-' vào gắn lại bằng dấu ' ', code này giúp bỏ hết dấu '-' thay vào bằng khoảng trắng.
-    // code này làm ngược lại so với lúc tạo href cho sản phẩm trong file classes.js
-    nameProduct = nameProduct.split('-').join(' ');
-
-    for(var p of list_products) {
-        if(nameProduct == p.name) {
-            maProduct = p.masp;
-            break;
-        }
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    
+    if(!productId) {
+        return khongTimThaySanPham();
     }
-    console.log('mã Product:', maProduct);
-    if(!maProduct) return khongTimThaySanPham();
 
     // Fetch product details from API
-    const productData = await fetchProductDetails(maProduct);
+    const productData = await fetchProductDetails(productId);
     if(!productData) return khongTimThaySanPham();
     
-    sanPhamHienTai = transformProductData(productData);
+    sanPhamHienTai = productData;
+    nameProduct = productData.productName;
 
     var divChiTiet = document.getElementsByClassName('chitietSanpham')[0];
 
@@ -106,10 +95,8 @@ async function phanTich_URL_chiTietSanPham() {
     document.getElementById('bigimg').src = sanPhamHienTai.img;
 
     // Hình nhỏ
-    if(productData.img && productData.img.length > 0) {
-        productData.img.forEach(img => {
-            addSmallImg(img);
-        });
+    if(sanPhamHienTai.img) {
+        addSmallImg(sanPhamHienTai.img);
     }
 
     // Khởi động thư viện hỗ trợ banner - chỉ chạy sau khi tạo xong hình nhỏ
@@ -180,24 +167,24 @@ function changepic(src) {
 
 // Thêm sản phẩm vào các khung sản phẩm
 function addKhungSanPham(list_sanpham, tenKhung, color, ele) {
-	// convert color to code
-	var gradient = `background-image: linear-gradient(120deg, ` + color[0] + ` 0%, ` + color[1] + ` 50%, ` + color[0] + ` 100%);`
-	var borderColor = `border-color: ` + color[0];
-	var borderA = `	border-left: 2px solid ` + color[0] + `;
-					border-right: 2px solid ` + color[0] + `;`;
+    // convert color to code
+    var gradient = `background-image: linear-gradient(120deg, ` + color[0] + ` 0%, ` + color[1] + ` 50%, ` + color[0] + ` 100%);`
+    var borderColor = `border-color: ` + color[0];
+    var borderA = `	border-left: 2px solid ` + color[0] + `;
+                    border-right: 2px solid ` + color[0] + `;`;
 
-	// mở tag
-	var s = `<div class="khungSanPham" style="` + borderColor + `">
-				<h3 class="tenKhung" style="` + gradient + `">* ` + tenKhung + ` *</h3>
-				<div class="listSpTrongKhung flexContain">`;
+    // mở tag
+    var s = `<div class="khungSanPham" style="` + borderColor + `">
+                <h3 class="tenKhung" style="` + gradient + `">* ` + tenKhung + ` *</h3>
+                <div class="listSpTrongKhung flexContain">`;
 
-	for (var i = 0; i < list_sanpham.length; i++) {
-		s += addProduct(list_sanpham[i], null, true);
-		// truyền vào 'true' để trả về chuỗi rồi gán vào s
-	}
+    for (var i = 0; i < list_sanpham.length; i++) {
+        s += addProduct(list_sanpham[i], null, true);
+        // truyền vào 'true' để trả về chuỗi rồi gán vào s
+    }
 
-	// thêm khung vào contain-khung
-	ele.innerHTML += s;
+    // thêm khung vào contain-khung
+    ele.innerHTML += s;
 }
 
 /// gợi ý sản phẩm
@@ -208,7 +195,7 @@ function suggestion(){
     // ====== Tìm các sản phẩm tương tự theo tiêu chí ====== 
     const sanPhamTuongTu = list_products
     // Lọc sản phẩm trùng
-    .filter((_) => _.masp !== sanPhamHienTai.masp)
+    .filter((_) => _.productId !== sanPhamHienTai.productId)
     // Tính điểm cho từng sản phẩm
     .map(sanPham => {
         // Tiêu chí 1: giá sản phẩm ko lệch nhau quá 1 triệu
@@ -226,7 +213,7 @@ function suggestion(){
         let giongThongSoKyThuat  = soLuongChiTietGiongNhau >= 3;
 
         // Tiêu chí 3: cùng hãng sản xuất 
-        let cungHangSanXuat = sanPham.company ===  sanPhamHienTai.company
+        let cungHangSanXuat = sanPham.brandName === sanPhamHienTai.brandName;
 
         // Tiêu chí 4: cùng loại khuyến mãi
         let cungLoaiKhuyenMai = sanPham.promo?.name === sanPhamHienTai.promo?.name;
